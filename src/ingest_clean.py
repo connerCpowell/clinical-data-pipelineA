@@ -61,7 +61,29 @@ def load_fhir_json(path: str) -> pd.DataFrame:
     df = pd.DataFrame(flat_rec)
     return df
 
-            
+def trim_columns(df: pd.DataFrame) -> pd.DataFrame:
+    columns_to_keep = [
+        'subject_reference',
+        'resourceType',
+        'gender',
+        'birthDate',
+        'maritalStatus_text',
+        'communication_language_text',
+        'type_0_text',
+        'period_start',
+        'period_end',
+        'location_0_location_display',
+        'code_text',
+        'total_value',
+        'diagnosis_0_type_0_coding_0_code',
+        'issued',
+        'outcome',
+        'participant_0_role_0_text',
+        'suppliedItem_itemCodeableConcept_text',
+        'manufactureDate'
+    ]
+    # Only keep what's present in the DataFrame
+    return df[[col for col in columns_to_keep if col in df.columns]]       
     
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
