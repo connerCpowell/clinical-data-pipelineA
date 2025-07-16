@@ -45,21 +45,32 @@ def load_data(path: str) -> pd.DataFrame:
     else:
         raise ValueError("Unexpected format -- brrrr")
     
-def load_fhir_json(path: str) -> pd.DataFrame:
+def load_fhir_json_seperated(path: str):
     with open(path, 'r') as f:
         data = json.load(f)
 
-    good_cols = ['Patient', 'Encounter', 'Condition', 'Claim', 'DiagnosticReport']
+    p_data = []
+    other_records = []
 
-    flat_rec = []
     for entry in data.get('entry', []):
         res = entry.get('resource', {})
-        if res.get('resourceType') in good_cols:
+        if res.get('resourceType') == 'Patient':
+            p_data.append(flatten_file(res))
+        elif res.get('resouceType') in ['Encounter', 'Condition', 'Claim', 'DiagnosticReport']:
             flat = flatten_file(res)
-            flat_rec.append(flat)
+            other_records.append(flat)
 
-    df = pd.DataFrame(flat_rec)
-    return df
+    df_patient = pd.DataFrame(p_data)
+    df_events = pd.DataFrame(other_records)
+
+
+    return df_patient, df_events
+
+
+def load_fhir_json_seperated(path: str):
+    with open(path, 'r') as f:
+        data = json.load(f)
+
 
 def trim_columns(df: pd.DataFrame) -> pd.DataFrame:
     columns_to_keep = [
@@ -83,7 +94,13 @@ def trim_columns(df: pd.DataFrame) -> pd.DataFrame:
         'manufactureDate'
     ]
     # Only keep what's present in the DataFrame
-    return df[[col for col in columns_to_keep if col in df.columns]]       
+    return df[[col for col in columns_to_keep if col in df.columns]]    
+
+def row_smush(df: pd.DataFrame) -> pd.DataFrame:
+    df['subject_reference'] = df['subject_reference'].ffill()
+    df['gender'] = df['gender'].ffill()
+
+    grouped = df.groupby('subject_reference')
     
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
